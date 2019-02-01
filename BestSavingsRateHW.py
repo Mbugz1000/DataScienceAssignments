@@ -7,33 +7,33 @@ class BestSavingsRate(object):
         self.semi_annual_raise = semi_annual_raise
         self.total_cost = total_cost
         
-    def userInput(self):
+    def userinput(self):
         print("Best Savings Rate Calculator!!!")
         return int(input("What is your annual starting salary? "))
         
-    #Portion saved will be our guess in the bisection search
-    def calculateMonths(self, portion_saved, loops):
+    # Portion saved will be our guess in the bisection search
+    def calculatemonths(self, portion_saved, loops):
         
         if loops == 0:
-            self.annual_salary = self.userInput()
+            self.annual_salary = self.userinput()
         savings = self.annual_salary/12*portion_saved
         down_payment = self.portion_down_payment*self.total_cost
         months = 0
         current_savings = 0
         
         while months != 36:
-            #Same as current_savings = Current_savings + Interest + Savings    
+            # Same as current_savings = Current_savings + Interest + Savings
             current_savings += current_savings*(self.r)/12 + savings
             
             if months%6 == 0 and months!=0:
-                #same as savings = savings + semi_annual_raise
+                # same as savings = savings + semi_annual_raise
                 savings += savings*self.semi_annual_raise
                     
             months += 1
         
         return down_payment, current_savings
 
-    #Gives us the results
+    # Gives us the results
     def results(self,method):
         portion_saved, guessNo, current_savings, down_payment = method
         print("_________________________________________________________________________________")
@@ -46,13 +46,13 @@ class BestSavingsRate(object):
         
         
 class BisectionSearch:
-    
-    def __init__(self, guess = 0, guessNo = 0):
-        #Same as the portion saved
+
+    def __init__(self, guess=0, guessNo=0):
+        # Same as the portion saved
         self.guess = guess
         self.guessNo = guessNo
         
-    def start(self,saveingsRateObj):
+    def start(self):
         high = 10000
         low = 0
         epsilon = 100000
@@ -61,10 +61,10 @@ class BisectionSearch:
         down_payment = 100001
         current_savings = 0
         
-        guess = (high)/2
+        guess = high/2
         while abs(down_payment - current_savings) > epsilon and guessNo < 30:
-            #Divide guessby 10000 so it can be a decimal rate for portion saved
-            down_payment, current_savings = savingsRateObj.calculateMonths(guess/10000, guessNo)
+            # Divide guess by 10000 so it can be a decimal rate for portion saved
+            down_payment, current_savings = savingsRateObj.calculatemonths(guess / 10000, guessNo)
             
             if current_savings < down_payment - epsilon:
                 low = guess
@@ -74,11 +74,11 @@ class BisectionSearch:
             guess = (high-low)/2 + low
             guessNo += 1
                    
-        #Divide by 100 to get the Percentage
+        # Divide by 100 to get the Percentage
         return guess/100, guessNo, current_savings, down_payment
         
     
 biSearchObj = BisectionSearch()
 savingsRateObj = BestSavingsRate()
-savingsRateObj.results(biSearchObj.start(savingsRateObj))
+savingsRateObj.results(biSearchObj.start())
 
