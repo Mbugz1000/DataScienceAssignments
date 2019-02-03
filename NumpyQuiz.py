@@ -59,4 +59,50 @@ a = np.array([14, 15, 16, 17, 18, 19], dtype='float32')
 b = np.array([4.5, 4, 4, 2, 5.6])
 # print(np.concatenate((a, b)))
 
-# 19
+# 20
+import csv
+file = open('C:\\Users\\ktmbugua\\Documents\\Digital Academy\\Data  Science\\emp_salo.csv')
+empSalaries = np.genfromtxt(('\t'.join(item) for item in csv.reader(file)),
+                            delimiter='\t', dtype=str)
+
+print(empSalaries.shape)
+
+# 21
+removedSalBlanks = np.array([sal for sal in empSalaries[1:] if not sal[4] == ''])
+floatSalary = [float(sal) for sal in removedSalBlanks[0:, 4]]
+
+print('Job Title with max Salary is', removedSalBlanks[np.argmax(floatSalary), 0])
+
+# 22
+print('Total salary paid is', np.sum(floatSalary))
+
+# 23
+difference = np.max(floatSalary) - np.min(floatSalary)
+print('The difference between the highest and the lowest salary is', difference, '. Lowest job is',
+      removedSalBlanks[np.argmin(floatSalary), 0])
+
+# 24
+print('Sorted by the Job Description\n', removedSalBlanks[np.argsort(removedSalBlanks[:, 0])])
+
+# 25
+print('No. of Departments are', len(set(removedSalBlanks[:, 1])))
+
+# 26
+import datetime as dt
+removedDayBlanks = np.array([day for day in empSalaries[1:] if not day[3] == ''])
+dateHire = [dt.datetime.strptime(day[0:10], '%m/%d/%Y') for day in removedDayBlanks[0:, 3]]
+print('Job Title and Salary of longest serving employee is', removedDayBlanks[np.argmin(dateHire), (0, 4)], 'respectively')
+
+
+# 27
+deptNames = np.sort(list(set(removedSalBlanks[:, 2])))
+def deptsalsum(deptname):
+    return np.sum([float(deptSal[1]) for deptSal in removedSalBlanks[:, (2, 4)] if deptSal[0] == deptname])
+
+sums = np.array([deptsalsum(deptname) for deptname in deptNames])
+print('Salaries each department gives out\n', np.concatenate((np.array(sums[:, None]),
+                                                              np.array(deptNames[:, None])), axis=1))
+
+# 29
+[date for date in dateHire]
+print('This Job Title was hired on the same day', )
