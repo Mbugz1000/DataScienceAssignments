@@ -71,27 +71,27 @@ print(empSalaries.shape)
 removedSalBlanks = np.array([sal for sal in empSalaries[1:] if not sal[4] == ''])
 floatSalary = [float(sal) for sal in removedSalBlanks[0:, 4]]
 
-print('Job Title with max Salary is', removedSalBlanks[np.argmax(floatSalary), 0])
+print('\nJob Title with max Salary is', removedSalBlanks[np.argmax(floatSalary), 0])
 
 # 22
-print('Total salary paid is', np.sum(floatSalary))
+print('\nTotal salary paid is', np.sum(floatSalary))
 
 # 23
 difference = np.max(floatSalary) - np.min(floatSalary)
-print('The difference between the highest and the lowest salary is', difference, '. Lowest job is',
+print('\nThe difference between the highest and the lowest salary is', difference, '. Lowest job is',
       removedSalBlanks[np.argmin(floatSalary), 0])
 
 # 24
-print('Sorted by the Job Description\n', removedSalBlanks[np.argsort(removedSalBlanks[:, 0])])
+print('\nSorted by the Job Description\n', removedSalBlanks[np.argsort(removedSalBlanks[:, 0])])
 
 # 25
-print('No. of Departments are', len(set(removedSalBlanks[:, 1])))
+print('\nNo. of Departments are', len(set(removedSalBlanks[:, 1])))
 
 # 26
 import datetime as dt
 removedDayBlanks = np.array([day for day in empSalaries[1:] if not day[3] == ''])
 dateHire = [dt.datetime.strptime(day[0:10], '%m/%d/%Y') for day in removedDayBlanks[0:, 3]]
-print('Job Title and Salary of longest serving employee is', removedDayBlanks[np.argmin(dateHire), (0, 4)], 'respectively')
+print('\nJob Title and Salary of longest serving employee is', removedDayBlanks[np.argmin(dateHire), (0, 4)], 'respectively')
 
 
 # 27
@@ -100,9 +100,18 @@ def deptsalsum(deptname):
     return np.sum([float(deptSal[1]) for deptSal in removedSalBlanks[:, (2, 4)] if deptSal[0] == deptname])
 
 sums = np.array([deptsalsum(deptname) for deptname in deptNames])
-print('Salaries each department gives out\n', np.concatenate((np.array(sums[:, None]),
+print('\nSalaries each department gives out\n', np.concatenate((np.array(sums[:, None]),
                                                               np.array(deptNames[:, None])), axis=1))
 
 # 29
-[date for date in dateHire]
-print('This Job Title was hired on the same day', )
+dateset = np.array(list(set(dateHire)))
+jobs = ['']
+dateNo = 0
+while True:
+    if len(jobs) < 2:
+        jobs = [removedSalBlanks[dates[0], 0] for dates in enumerate(dateHire) if dates[1] == dateset[dateNo]]
+        dateNo += 1
+    else:
+        break
+
+print('\nThese Job Title were hired on the same day\n', jobs)
