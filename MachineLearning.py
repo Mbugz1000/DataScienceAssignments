@@ -27,7 +27,6 @@ X_train, X_test, y_train, y_test = train_test_split(iris_dataset['data'], iris_d
 
 # Building the model: k-Nearest Neighbours
 from sklearn.neighbors import KNeighborsClassifier
-# TODO Read on how this Classifier Works
 knn = KNeighborsClassifier(n_neighbors=1)
 
 knn.fit(X_train, y_train)
@@ -48,7 +47,6 @@ print('Test set score: (Using np.mean and knn.predict) {:.2f}'.format(np.mean(y_
 print('Test set score: (Using knn.score) {:.2f}'.format(knn.score(X_test, y_test)))
 
 # Building a regression Model
-# TODO Read on how this Regression Model Works
 from sklearn.linear_model import LinearRegression
 X_train, X_test, y_train, y_test = train_test_split(iris[['petal length (cm)']], iris['petal width (cm)'], random_state=0)
 linreg = LinearRegression()
@@ -73,7 +71,6 @@ print(iris.columns)
 
 x = iris[['sepal length (cm)', 'sepal width (cm)', 'petal length (cm)', 'petal width (cm)']]
 y = iris['target']
-# TODO Read on how this model works
 kmeans = KMeans(n_clusters=3, random_state=0)
 y_kmeans = kmeans.fit_predict(x)
 
@@ -89,3 +86,13 @@ plt.scatter(x.iloc[y_kmeans == 2, 0], x.iloc[y_kmeans == 2, 1], s=100, c='green'
 plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], s=100, c='yellow', label='Centroids')
 
 plt.legend()
+
+# import library for 3D plotting
+from mpl_toolkits import mplot3d
+
+iris = load_iris()
+X = iris.data
+Y = iris.target
+plt.figure('Iris dataset', figsize=(7, 5))
+ax = plt.axes(projection='3d')
+ax.scatter(X[:, 3], X[:, 0], X[:, 2], c=Y)
