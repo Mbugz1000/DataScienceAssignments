@@ -50,29 +50,24 @@ def cleaning_dataset():
 cleaning_dataset()
 print(df.describe())
 
-
-def linegraphfunction(dataplot, title, xlabel, ylabel, num):
+def pandalineplot(subPlotObject, title="", tilt=0, yearsbool=True, transptablebool=True):
     years = ['f2003_2004', 'f2004_2005', 'f2005_2006', 'f2006_2007', 'f2007_2008', 'f2008_2009', 'f2009_2010']
-    dataplot = dataplot[years]
-    r = lambda: random.randint(0, 255)
-    setStyles = ['-.', '--', '-', ':', 'o', '+']
+    fig, axs = plt.subplots()
+    if yearsbool:
+        subPlotObject = subPlotObject[years]
 
-    fig, ax = plt.subplots()
-    # plt.figure()
-    for i in range(0, num):
-        ax.plot(years, dataplot.iloc[i], setStyles[i % 6], color='#%02X%02X%02X' % (r(), r(), r()),
-                 label=dataplot.index[i])
+    if transptablebool:
+        subPlotObject = subPlotObject.stack().unstack(level=0)
 
-    ax.legend(loc="upper left")
-    ax.grid(which='both')
-    ax.set_title(title, fontsize=16, fontweight='bold')
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    ax.yaxis.set_major_formatter(FuncFormatter(y_fmt))
+    subPlotObject.plot(ax=axs)
+    axs.yaxis.set_major_formatter(FuncFormatter(y_fmt))
+    axs.set_xticks(range(len(years)))
+    axs.set_xticklabels(years)
+    plt.title(title, fontsize=16, fontweight='bold')
+    plt.xticks(rotation=tilt)
+    plt.grid(which='both')
 
-    plt.show()
-
-def pandaPlot(subPlotObject, stacked=True, title="", tilt=90, yearsbool=False):
+def pandabarplot(subPlotObject, stacked=True, title="", tilt=90, yearsbool=False):
     years = ['f2003_2004', 'f2004_2005', 'f2005_2006', 'f2006_2007', 'f2007_2008', 'f2008_2009', 'f2009_2010']
     fig, axs = plt.subplots()
     if yearsbool:
@@ -114,48 +109,53 @@ def y_fmt(y, pos):
 
 def allgraphs():
     # 1 Grouped by County (Top 5, Lowest 5)
-    linegraphfunction(df.groupby(['county']).sum().sort_values('total_amount', ascending=False),
-                      "Yearly Costs for Top 10 Counties", "Years", "Total Funds", 10)
+    pandalineplot(df.groupby(['county']).sum().sort_values('total_amount', ascending=False).head(10),
+                  "Yearly Costs for Top 10 Counties")
 
     # 2 Grouped by Sector
-    linegraphfunction(df.groupby(['sector']).sum().sort_values('total_amount', ascending=False),
-                       "Yearly Costs for Top 10 Sectors", "Years", "Total Funds", 10)
+    pandalineplot(df.groupby(['sector']).sum().sort_values('total_amount', ascending=False).head(10),
+                  "Yearly Costs for Top 10 Sectors")
 
     # 3 Group by Completion per Sector
-    pandaPlot(df.groupby(['sector', 'implementation_status']).sum().total_amount.unstack().sort_values
+    pandabarplot(df.groupby(['sector', 'implementation_status']).sum().total_amount.unstack().sort_values
               ('Complete', ascending=False).head(8), title='Top 8 Sectors Expenditure by Implementation Status', tilt=45)
 
     # 4 Group by Completion per County
-    pandaPlot(df.groupby(['county', 'implementation_status']).sum().total_amount.unstack().sort_values
-              ('Complete', ascending=False).head(15), title='Top 15 County Expenditure by Implementation Status',tilt=45)
+    pandabarplot(df.groupby(['county', 'implementation_status']).sum().total_amount.unstack().sort_values
+              ('Ongoing', ascending=False).head(15), title='Top 15 County Expenditure by Implementation Status', tilt=45)
 
     # 5 No of Projects per County
-    pandaPlot(df.groupby('county')['objectid'].count().sort_values(ascending=False), False, 'No. of Projects Per County')
+    pandabarplot(df.groupby('county')['objectid'].count().sort_values(ascending=False), False, 'No. of Projects Per County')
 
     # 6 No of Projects per Sector
-    pandaPlot(df.groupby('sector')['objectid'].count().sort_values(ascending=False), False, 'No. of Projects Per Sector', 45)
+    pandabarplot(df.groupby('sector')['objectid'].count().sort_values(ascending=False), False, 'No. of Projects Per Sector', 45)
 
     # 7 Estimated Output/ Actual Totals per Sector
-    pandaPlot(df.groupby('sector')['estimated_cost', 'total_amount'].sum().sort_values('estimated_cost', ascending=False)
-              .head(8), False, 'Estimates Output vs Actual Totals for Top 8 Sectors', 45)
+    pandabarplot(df.groupby('sector')['estimated_cost', 'total_amount'].sum().sort_values('estimated_cost', ascending=False)
+                 .head(8), False, 'Estimates Output vs Actual Totals for Top 8 Sectors', 45)
 
     # 8 Estimated Output/ Actual Totals per County
-    pandaPlot(df.groupby('county')['estimated_cost', 'total_amount'].sum().sort_values('total_amount', ascending=False)
-              .head(15), False, 'Estimates Output vs Actual Totals for Top 15 Counties', 45)
+    pandabarplot(df.groupby('county')['estimated_cost', 'total_amount'].sum().sort_values('total_amount', ascending=False)
+                 .head(15), False, 'Estimates Output vs Actual Totals for Top 15 Counties', 45)
 
-# 9 Projects that received funding in 2006 - 2007
+    # 9 No. of Projects funded per year
+    pandabarplot(df.astype(bool).sum(), False, "No. of Projects Funded Per Year", 0, True)
+
+allgraphs()
+
+# 10 Projects that received funding in 2006 - 2007
 df_2007 = df[df.f2006_2007 != 0]
 # df_2007.to_csv(miniProjectLoc + "CDF_2007.csv", sep=',', encoding='utf-8')
 # scatterplot(df_2007, 'f2006_2007', 'Location Vs 2006-2007 Amount')
 
-# 10 Ongoing Projects after the 7 years
+# 11 Ongoing Projects after the 7 years
 df_ongoing = df[df.implementation_status == 'Ongoing']
 # df_ongoing.to_csv(miniProjectLoc + "CDF_Ongoing.csv", sep=',', encoding='utf-8')
 # scatterplot(df_ongoing, 'total_amount', 'Location Vs Total Amount')
 
-# 11 Projects that received funding in 2005 - 2006
+# 12 Projects that received funding in 2005 - 2006
 df_2007 = df[df.f2005_2006 != 0]
 # df_2007.to_csv(miniProjectLoc + "CDF_2006.csv", sep=',', encoding='utf-8')
+years = ['f2003_2004', 'f2005_2006', 'f2004_2005',  'f2006_2007', 'f2007_2008', 'f2008_2009', 'f2009_2010']
 
-# 12 No. of Projects funded per year
-pandaPlot(df.astype(bool).sum(), False, "No. of Projects Funded Per Year", 0, True)
+
