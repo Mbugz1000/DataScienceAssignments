@@ -44,44 +44,6 @@ df['sector'] = sectors.str.capitalize()
 print(df.describe())
 
 import random
-def barchartfunction(mainDataFrame, groups, subgroups, num, xaxis,title):
-    r = lambda: random.randint(0, 255)
-    color = '#%02X%02X%02X' % (r(), r(), r())
-
-    outerList = []
-    for key2 in subgroups:
-        bars = []
-        for key1 in groups:
-            try:
-                bars.append(mainDataFrame[key1][key2])
-            except KeyError:
-                bars.append(0)
-                continue
-
-        outerList.append(bars)
-
-    barWidth = 0.15
-
-    # len(outerList[0])
-    r1 = np.arange(num)
-    fig, ax = plt.subplots()
-    for i, bars in enumerate(outerList):
-        ax.bar(r1, bars[0:num], color='#%02X%02X%02X' % (r(), r(), r()), width=barWidth, edgecolor='white', label=subgroups[i])
-        r1 = [x + barWidth for x in r1]
-
-    # Add xticks on the middle of the group bars
-    ax.set_xlabel(xaxis, fontweight='bold')
-    ax.set_xticklabels(groups)
-    ax.set_xticks([r2 + barWidth for r2 in range(num)])
-    ax.set_title(title, fontsize=16, fontweight='bold')
-    plt.grid(which='both')
-    ax.yaxis.set_major_formatter(FuncFormatter(y_fmt))
-
-    # Create legend & Show graphic
-    ax.legend()
-    plt.xticks(rotation=40)
-    plt.show()
-
 def linegraphfunction(dataplot, title, xlabel, ylabel, num):
     r = lambda: random.randint(0, 255)
     setStyles = ['-.', '--', '-', ':', 'o', '+']
@@ -130,42 +92,31 @@ def y_fmt(y, pos):
                 #return y
     return y
 
-# Grouped by County (Top 5, Lowest 5)
+# 1 Grouped by County (Top 5, Lowest 5)
 years = ['f2003_2004', 'f2004_2005', 'f2005_2006', 'f2006_2007', 'f2007_2008', 'f2008_2009', 'f2009_2010']
 countyPlot = df.groupby(['county']).sum().sort_values('total_amount', ascending=False)[years]
 linegraphfunction(countyPlot, "Yearly Costs for Top 10 Counties", "Years", "Total Funds", 10)
 
-# Grouped by Sector
+# 2 Grouped by Sector
 sectorPlot = df.groupby(['sector']).sum().sort_values('total_amount', ascending=False)[years]
 linegraphfunction(sectorPlot, "Yearly Costs for Top 10 Sectors", "Years", "Total Funds", 10)
 
-# Group by Completion per Sector
-groups = df['sector'].unique()
-subgroups = df['implementation_status'].unique()
-completionSector = df.groupby(['sector', 'implementation_status']).sum().sort_values('total_amount', ascending=False)['total_amount']
-barchartfunction(completionSector, groups, subgroups, 8, 'Sectors', 'Top 8 Sectors by Expenditure')
+# 3 Group by Completion per Sector
+pandaPlot(df.groupby(['sector', 'implementation_status']).sum().total_amount.unstack().sort_values('Complete', ascending=False).head(8), True, 'Top 8 Sectors Expenditure by Implementation Status', 45)
 
-pandaPlot(df.groupby(['sector', 'implementation_status']).sum().total_amount.unstack(), True, 'Sector Expenditure by Implementation Status', 45)
+# 4 Group by Completion per County
+pandaPlot(df.groupby(['county', 'implementation_status']).sum().total_amount.unstack().sort_values('Complete', ascending=False).head(15), True, 'Top 15 County Expenditure by Implementation Status', 45)
 
-
-# Group by Completion per County
-countyGroups = df['county'].unique()
-completionCounty = df.groupby(['county', 'implementation_status']).sum().sort_values('total_amount', ascending=False)['total_amount']
-barchartfunction(completionCounty, countyGroups, subgroups, 15, 'Counties', 'Top 15 Counties by Expenditure')
-
-pandaPlot(df.groupby(['county', 'implementation_status']).sum().total_amount.unstack(), True, 'County Expenditure by Implementation Status', 90)
-
-
-# No of Projects per County
+# 5 No of Projects per County
 pandaPlot(df.groupby('county')['objectid'].count().sort_values(ascending=False), False, 'No. of Projects Per County', 90)
 
-# No of Projects per Sector
+# 6 No of Projects per Sector
 pandaPlot(df.groupby('sector')['objectid'].count().sort_values(ascending=False), False, 'No. of Projects Per Sector', 45)
 
-# Estimated Output/ Actual Totals per Sector
-pandaPlot(df.groupby('sector')['estimated_cost', 'total_amount'].sum().sort_values('estimated_cost', ascending=False), False, 'Estimates Output vs Actual Totals per Sector', 45)
+# 7 Estimated Output/ Actual Totals per Sector
+pandaPlot(df.groupby('sector')['estimated_cost', 'total_amount'].sum().sort_values('estimated_cost', ascending=False).head(5), False, 'Estimates Output vs Actual Totals per Sector', 45)
 
-# Estimated Output/ Actual Totals per County
+# 8 Estimated Output/ Actual Totals per County
 pandaPlot(df.groupby('county')['estimated_cost', 'total_amount'].sum().sort_values('total_amount', ascending=False), False, 'Estimates Output vs Actual Totals per County', 90)
 
 # Import library for 3D plotting
@@ -178,7 +129,5 @@ X = df[['x', 'y']]
 plt.figure('Location Vs Total Amount', figsize=(7, 5))
 ax = plt.axes(projection='3d')
 # ax.scatter(X.x, X.y, Z)
-# TODO Enable this to start working. Look for target column
-for z in Z:
-    ax.plot_surface(X.x, X.y, z, rstride=1, cstride=1, cmap=cmp.coolwarm, linewidth=0, antialiased=False)
+# ax.plot_surface(X.x, X.y, z, rstride=1, cstride=1, cmap=cmp.coolwarm, linewidth=0, antialiased=False)
 
