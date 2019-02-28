@@ -8,47 +8,51 @@ from mpl_toolkits import mplot3d
 import matplotlib.cm as cmp
 import random
 miniProjectLoc = "C:\\Users\\ktmbugua\\Documents\\Digital Academy\\Data  Science\\MiniProject\\"
-df = pd.read_csv(miniProjectLoc + "CDF_Expenditure_on_Projects.csv")
-def cleaning_dataset():
-    df.drop(columns=['index_', 'remarks', 'prox2', 'district', 'constituency', 'location'], inplace=True)
-    activities = df['activity_to_bedone']
+def cleaning_dataset(dataframe):
+    dataframe.drop(columns=['index_', 'remarks', 'prox2', 'district', 'constituency', 'location', 'total_amount'], inplace=True)
+    dataframe['total_amount'] = dataframe[['f2003_2004', 'f2005_2006', 'f2004_2005',  'f2006_2007', 'f2007_2008', 'f2008_2009', 'f2009_2010']].sum(axis=1)
+    activities = dataframe['activity_to_bedone']
     classroom = activities.str.contains('(?i)classroom')
     latrines = activities.str.contains('(?i)latrines|toilet')
     classroomLatrines = (classroom & latrines)
     roadRepair = activities.str.contains('(?i)murram|road|grading')
     dispensary = activities.str.contains('(?i)dispensary')
-    df['activity_to_bedone'] = np.where(roadRepair, 'Road Repair',
-                                        np.where(classroom, 'Construction/Renovation of Classrooms',
-                                                 np.where(latrines, 'Construction of Latrines',
-                                                          np.where(classroomLatrines, 'Construction/Renovation of Classrooms and Latrines',
-                                                                   np.where(dispensary, 'Construction of Dispensary',df['activity_to_bedone'])))))
+    dataframe['activity_to_bedone'] = np.where(roadRepair, 'Road Repair',
+                                               np.where(classroom, 'Construction/Renovation of Classrooms',
+                                                        np.where(latrines, 'Construction of Latrines',
+                                                                 np.where(classroomLatrines, 'Construction/Renovation of Classrooms and Latrines',
+                                                                          np.where(dispensary, 'Construction of Dispensary', dataframe['activity_to_bedone'])))))
 
-    implementation = df['implementation_status']
+    implementation = dataframe['implementation_status']
     ongoing = implementation.str.contains('(?i)ongoing|on going|on-going|incomplete|on - going|going|in progress|50%|tendering|pending|ongoi|gpomg|still requires|plastering|painting|started')
     notStarted = implementation.str.contains('(?i)not started|not yet started|new|stalled|to start|not yet|yet to begin|ye to commence|not stated|to comenc|to commence|to be started')
     fundsReallocated = implementation.str.contains('(?i)allocated|allocation|rea located|realloca')
     complete = implementation.str.contains('(?i)complete|done|purchased|roofed|coomplete|pipes laid|in use|rehebilitated|100%|repaired|coimplte|dug|rehabilitated|bed made|plastered|renovated|in place')
-    df['implementation_status'] = np.where(complete, 'Complete',
-                                           np.where(ongoing, 'Ongoing',
+    dataframe['implementation_status'] = np.where(complete, 'Complete',
+                                                  np.where(ongoing, 'Ongoing',
                                                     np.where(notStarted, 'Not Started',
                                                              np.where(fundsReallocated, 'Funds Re-allocated', 'Other'))))
 
-    expectedOutput = df['expected_output']
+    expectedOutput = dataframe['expected_output']
     expClassrooms = expectedOutput.str.contains('(?i)class|facilities|edu|education')
     expRoad = expectedOutput.str.contains('(?i)road|murram|grade')
     expWater = expectedOutput.str.contains('(?i)water')
     expLearning = expectedOutput.str.contains('(?i)environment|learn')
-    df['expected_output'] = np.where(expClassrooms, 'Improved Learning Facilities/Classrooms',
-                                     np.where(expRoad, 'Improved Roads',
-                                              np.where(expWater, 'Improved Water Access',
-                                                       np.where(expLearning, 'Improved Learning Environment', df['expected_output']))))
+    dataframe['expected_output'] = np.where(expClassrooms, 'Improved Learning Facilities/Classrooms',
+                                            np.where(expRoad, 'Improved Roads',
+                                                     np.where(expWater, 'Improved Water Access',
+                                                              np.where(expLearning, 'Improved Learning Environment', dataframe['expected_output']))))
 
-    sectors = df['sector']
+    sectors = dataframe['sector']
     sectors.str.lower()
-    df['sector'] = sectors.str.capitalize()
+    dataframe['sector'] = sectors.str.capitalize()
+    dataframe = dataframe[dataframe.total_amount != 1]
 
-cleaning_dataset()
-print(df.describe())
+    # Remove projects that received nothing
+    return dataframe[dataframe.total_amount != 0]
+
+df = cleaning_dataset(pd.read_csv(miniProjectLoc + "CDF_Expenditure_on_Projects.csv"))
+describe = df.describe()
 
 def pandalineplot(subPlotObject, title="", tilt=0, yearsbool=True, transptablebool=True):
     years = ['f2003_2004', 'f2004_2005', 'f2005_2006', 'f2006_2007', 'f2007_2008', 'f2008_2009', 'f2009_2010']
@@ -128,7 +132,14 @@ def allgraphs():
     pandabarplot(df.groupby('county')['objectid'].count().sort_values(ascending=False), False, 'No. of Projects Per County')
 
     # 6 No of Projects per Sector
-    pandabarplot(df.groupby('sector')['objectid'].count().sort_values(ascending=False), False, 'No. of Projects Per Sector', 45)
+    df_per_sector = df.groupby('sector')['objectid'].count().sort_values(ascending=False)
+    pandabarplot(df_per_sector, False, 'No. of Projects Per Sector', 45)
+
+    def pietest():
+        fig1, ax1 = plt.subplots()
+        df_per_sector.plot.pie(ax=ax1, autopct='%1.1f%%', legend=True)  # autopct is show the % on plot
+        ax1.axis('equal')
+        plt.show()
 
     # 7 Estimated Output/ Actual Totals per Sector
     pandabarplot(df.groupby('sector')['estimated_cost', 'total_amount'].sum().sort_values('estimated_cost', ascending=False)
@@ -140,8 +151,6 @@ def allgraphs():
 
     # 9 No. of Projects funded per year
     pandabarplot(df.astype(bool).sum(), False, "No. of Projects Funded Per Year", 0, True)
-
-allgraphs()
 
 # 10 Projects that received funding in 2006 - 2007
 df_2007 = df[df.f2006_2007 != 0]
@@ -158,4 +167,8 @@ df_2007 = df[df.f2005_2006 != 0]
 # df_2007.to_csv(miniProjectLoc + "CDF_2006.csv", sep=',', encoding='utf-8')
 years = ['f2003_2004', 'f2005_2006', 'f2004_2005',  'f2006_2007', 'f2007_2008', 'f2008_2009', 'f2009_2010']
 
-
+# Categorising Money received
+names = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+df['total_amount_categ'] = pd.cut(df.total_amount, labels=names, bins=np.exp(range(20))[::2]).dropna()
+df['total_amount_categories'] = df.total_amount_categ.astype(int)
+df.drop(columns=['total_amount_categ', 'total_amount'], inplace=True)

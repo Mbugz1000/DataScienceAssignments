@@ -19,6 +19,7 @@ iris_dataset = load_iris()
 # Converting a Sklearn Bunch into a Pandas DataFrame
 iris = pd.DataFrame(data=iris_dataset["data"], columns=iris_dataset["feature_names"])
 iris["target"] = iris_dataset["target"]
+iris.info()
 
 # Training and Testing Data
 from sklearn.model_selection import train_test_split
