@@ -8,6 +8,7 @@ from sklearn.cluster import KMeans
 from mpl_toolkits import mplot3d
 import matplotlib.cm as cmp
 import random
+
 miniProjectLoc = "C:\\Users\\ktmbugua\\Documents\\Digital Academy\\Data  Science\\MiniProject\\"
 def cleaning_dataset(dataframe):
     dataframe.drop(columns=['index_', 'remarks', 'prox2', 'district', 'constituency', 'location', 'total_amount'], inplace=True)
@@ -118,9 +119,6 @@ def allgraphs():
     pandalineplot(df.groupby(['county']).sum().sort_values('total_amount', ascending=False).head(10),
                   "Yearly Costs for Top 10 Counties")
 
-    pandalineplot(df_cum.groupby(['county']).sum().sort_values('total_amount', ascending=False).head(10),
-                  "Yearly Costs for Top 10 Counties DataSet 2")
-
     # 2 Grouped by Sector
     pandalineplot(df.groupby(['sector']).sum().sort_values('total_amount', ascending=False).head(10),
                   "Yearly Costs for Top 10 Sectors")
@@ -140,12 +138,6 @@ def allgraphs():
     df_per_sector = df.groupby('sector')['objectid'].count().sort_values(ascending=False)
     pandabarplot(df_per_sector, False, 'No. of Projects Per Sector', 45)
 
-    def pietest():
-        fig1, ax1 = plt.subplots()
-        df_per_sector.plot.pie(ax=ax1, autopct='%1.1f%%', legend=True)  # autopct is show the % on plot
-        ax1.axis('equal')
-        plt.show()
-
     # 7 Estimated Output/ Actual Totals per Sector
     pandabarplot(df.groupby('sector')['estimated_cost', 'total_amount'].sum().sort_values('estimated_cost', ascending=False)
                  .head(8), False, 'Estimates Output vs Actual Totals for Top 8 Sectors', 45)
@@ -157,61 +149,35 @@ def allgraphs():
     # 9 No. of Projects funded per year
     pandabarplot(df.astype(bool).sum(), False, "No. of Projects Funded Per Year", 0, True)
 
-# 10 Projects that received funding in 2006 - 2007
-df_2007 = df[df.f2006_2007 != 0]
-# df_2007.to_csv(miniProjectLoc + "CDF_2007.csv", sep=',', encoding='utf-8')
-# scatterplot(df_2007, 'f2006_2007', 'Location Vs 2006-2007 Amount')
-
-# 11 Ongoing Projects after the 7 years
-df_ongoing = df[df.implementation_status == 'Ongoing']
-# df_ongoing.to_csv(miniProjectLoc + "CDF_Ongoing.csv", sep=',', encoding='utf-8')
-# scatterplot(df_ongoing, 'total_amount', 'Location Vs Total Amount')
-
-# 12 Projects that received funding in 2005 - 2006
-df_2007 = df[df.f2005_2006 != 0]
-# df_2007.to_csv(miniProjectLoc + "CDF_2006.csv", sep=',', encoding='utf-8')
-# print(np.exp(np.linspace(0.0, 21.0, 0.5)))
-test = np.exp([x/10 for x in range(0, 185, 5)])
-x = range(1, 20)
-
-years = ['f2003_2004', 'f2005_2006', 'f2004_2005',  'f2006_2007', 'f2007_2008', 'f2008_2009', 'f2009_2010']
-df['total_amount_categ'] = pd.cut(df.total_amount, labels=range(1, 62), bins=np.exp([x/100 for x in range(300, 1850, 25)])).dropna()
-df['total_amount_int'] = df.total_amount_categ.astype(int)
-print(np.exp(np.linspace(0, 0.5, 21)))
-plt.figure()
-df_p = df.groupby('total_amount_categ')['total_amount'].count()
-print(df_p)
-df_p.plot.bar()
-
 def knnml(columns):
+    df['total_amount_categ'] = pd.cut(df.total_amount, labels=range(1, 62),
+                                      bins=np.exp([x / 100 for x in range(300, 1850, 25)])).dropna()
+    df['total_amount_int'] = df.total_amount_categ.astype(int)
     x = df[columns].fillna(0)
 
     kmeans = KMeans(n_clusters=2, random_state=0)
     y_kmeans = kmeans.fit_predict(x)
 
     # Visualising the clusters
-    plt.figure()
-    plt.scatter(x.iloc[y_kmeans == 0, 0], x.iloc[y_kmeans == 0, 1], s=10, c='red', label='Cluster 1')
-    plt.scatter(x.iloc[y_kmeans == 1, 0], x.iloc[y_kmeans == 1, 1], s=10, c='blue', label='Cluster 2')
-    # plt.scatter(x.iloc[y_kmeans == 2, 0], x.iloc[y_kmeans == 2, 1], s=10, c='green', label='Cluster 3')
-    # plt.scatter(x.iloc[y_kmeans == 3, 0], x.iloc[y_kmeans == 3, 1], s=10, c='cyan', label='Cluster 4')
+    fig, axs = plt.subplots()
+    axs.scatter(x.iloc[y_kmeans == 0, 0], x.iloc[y_kmeans == 0, 1], s=10, c='red', label='Low Exp Projects')
+    axs.scatter(x.iloc[y_kmeans == 1, 0], x.iloc[y_kmeans == 1, 1], s=10, c='blue', label='High Exp Projects')
+    axs.yaxis.set_major_formatter(FuncFormatter(y_fmt))
 
     # Plotting the centroids of the clusters
-    plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], s=25, c='yellow', label='Centroids')
+    axs.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], s=25, c='yellow', label='Centroids')
+    plt.grid(which='both')
     plt.legend()
 
+allgraphs()
 
-knnml(['x', 'y', 'total_amount', 'f2007_2008', 'f2006_2007'])
+# 10,11 Plots during election year
 knnml(['x', 'y', 'total_amount_int', 'f2007_2008', 'f2006_2007'])
-knnml(['total_amount', 'f2007_2008', 'x', 'y',  'f2006_2007'])
 knnml(['total_amount_int', 'f2007_2008', 'x', 'y',  'f2006_2007'])
 
-knnml(['x', 'y', 'total_amount', 'f2003_2004', 'f2004_2005'])
+# 12, 13 Plots just before election year
 knnml(['x', 'y', 'total_amount_int', 'f2003_2004', 'f2004_2005'])
-knnml(['total_amount',  'f2004_2005', 'f2003_2004', 'x', 'y'])
 knnml(['total_amount_int', 'f2004_2005', 'f2003_2004', 'x', 'y'])
 
-knnml(['x', 'y', 'total_amount', 'f2008_2009', 'f2009_2010'])
-knnml(['x', 'y', 'total_amount_int', 'f2008_2009', 'f2009_2010'])
-knnml(['total_amount', 'f2009_2010','x', 'y',  'f2008_2009'])
-knnml(['total_amount_int', 'f2009_2010', 'x', 'y',  'f2008_2009'])
+# 14 Distribution of projects in categories
+pandabarplot(df.groupby('total_amount_categ')['total_amount'].count(), False, 'Distribution of Project Expenditure in Categories', 0, )
