@@ -55,8 +55,6 @@ def cleaning_dataset(dataframe):
 
 df = cleaning_dataset(pd.read_csv(miniProjectLoc + "CDF_Expenditure_on_Projects.csv"))
 describe = df.describe()
-df_cum = pd.read_csv(miniProjectLoc + "CDF_Cumulative_Expenditures_Constituencies.csv")
-df_cum['total_amount'] = df_cum[['f2003_2004', 'f2005_2006', 'f2004_2005',  'f2006_2007', 'f2007_2008', 'f2008_2009', 'f2009_2010']].sum(axis=1)
 
 def pandalineplot(subPlotObject, title="", tilt=0, yearsbool=True, transptablebool=True):
     years = ['f2003_2004', 'f2004_2005', 'f2005_2006', 'f2006_2007', 'f2007_2008', 'f2008_2009', 'f2009_2010']
@@ -114,17 +112,6 @@ def y_fmt(y, pos):
 
                 #return y
     return y
-
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-df_reg = df_cum.groupby(['county', 'population'])[['total_amount']].sum().reset_index()
-X_train, X_test, y_train, y_test = train_test_split(df_reg[['population']], df_reg['total_amount'], random_state=0)
-linreg = LinearRegression()
-linreg.fit(X_train, y_train)
-
-print('\nRegression Test set score: {:.2f}'.format(linreg.score(X_test, y_test)))
-df_reg.plot.scatter(x='population', y='total_amount')
-plt.plot(df_reg['population'], linreg.coef_*df_reg['population']+linreg.intercept_, 'r-')
 
 def allgraphs():
     # 1 Grouped by County (Top 5, Lowest 5)
@@ -184,12 +171,11 @@ df_ongoing = df[df.implementation_status == 'Ongoing']
 df_2007 = df[df.f2005_2006 != 0]
 # df_2007.to_csv(miniProjectLoc + "CDF_2006.csv", sep=',', encoding='utf-8')
 # print(np.exp(np.linspace(0.0, 21.0, 0.5)))
-print(np.exp([x/10 for x in range(0, 18, 5)]))
+test = np.exp([x/10 for x in range(0, 185, 5)])
 x = range(1, 20)
-print(x)
 
 years = ['f2003_2004', 'f2005_2006', 'f2004_2005',  'f2006_2007', 'f2007_2008', 'f2008_2009', 'f2009_2010']
-df['total_amount_categ'] = pd.cut(df.total_amount, labels=range(1, 20), bins=np.exp([x/10 for x in range(0, 200, 5)])).dropna()
+df['total_amount_categ'] = pd.cut(df.total_amount, labels=range(1, 62), bins=np.exp([x/100 for x in range(300, 1850, 25)])).dropna()
 df['total_amount_int'] = df.total_amount_categ.astype(int)
 print(np.exp(np.linspace(0, 0.5, 21)))
 plt.figure()
@@ -200,18 +186,32 @@ df_p.plot.bar()
 def knnml(columns):
     x = df[columns].fillna(0)
 
-    kmeans = KMeans(n_clusters=3, random_state=0)
+    kmeans = KMeans(n_clusters=2, random_state=0)
     y_kmeans = kmeans.fit_predict(x)
 
     # Visualising the clusters
     plt.figure()
     plt.scatter(x.iloc[y_kmeans == 0, 0], x.iloc[y_kmeans == 0, 1], s=10, c='red', label='Cluster 1')
     plt.scatter(x.iloc[y_kmeans == 1, 0], x.iloc[y_kmeans == 1, 1], s=10, c='blue', label='Cluster 2')
-    plt.scatter(x.iloc[y_kmeans == 2, 0], x.iloc[y_kmeans == 2, 1], s=10, c='green', label='Cluster 3')
+    # plt.scatter(x.iloc[y_kmeans == 2, 0], x.iloc[y_kmeans == 2, 1], s=10, c='green', label='Cluster 3')
+    # plt.scatter(x.iloc[y_kmeans == 3, 0], x.iloc[y_kmeans == 3, 1], s=10, c='cyan', label='Cluster 4')
 
     # Plotting the centroids of the clusters
     plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], s=25, c='yellow', label='Centroids')
     plt.legend()
-#
-# knnml(['total_amount_int', 'f2007_2008', 'f2006_2007', 'x', 'y'])
-# knnml(['x', 'y','total_amount_int', 'f2007_2008', 'f2006_2007'])
+
+
+knnml(['x', 'y', 'total_amount', 'f2007_2008', 'f2006_2007'])
+knnml(['x', 'y', 'total_amount_int', 'f2007_2008', 'f2006_2007'])
+knnml(['total_amount', 'f2007_2008', 'x', 'y',  'f2006_2007'])
+knnml(['total_amount_int', 'f2007_2008', 'x', 'y',  'f2006_2007'])
+
+knnml(['x', 'y', 'total_amount', 'f2003_2004', 'f2004_2005'])
+knnml(['x', 'y', 'total_amount_int', 'f2003_2004', 'f2004_2005'])
+knnml(['total_amount',  'f2004_2005', 'f2003_2004', 'x', 'y'])
+knnml(['total_amount_int', 'f2004_2005', 'f2003_2004', 'x', 'y'])
+
+knnml(['x', 'y', 'total_amount', 'f2008_2009', 'f2009_2010'])
+knnml(['x', 'y', 'total_amount_int', 'f2008_2009', 'f2009_2010'])
+knnml(['total_amount', 'f2009_2010','x', 'y',  'f2008_2009'])
+knnml(['total_amount_int', 'f2009_2010', 'x', 'y',  'f2008_2009'])
