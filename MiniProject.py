@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
+from sklearn.cluster import KMeans
 # Import library for 3D plotting
 from mpl_toolkits import mplot3d
 import matplotlib.cm as cmp
@@ -47,6 +48,7 @@ def cleaning_dataset(dataframe):
     sectors.str.lower()
     dataframe['sector'] = sectors.str.capitalize()
     dataframe = dataframe[dataframe.total_amount != 1]
+    dataframe = dataframe[dataframe.total_amount != 2]
 
     # Remove projects that received nothing
     return dataframe[dataframe.total_amount != 0]
@@ -146,8 +148,8 @@ def allgraphs():
                  .head(8), False, 'Estimates Output vs Actual Totals for Top 8 Sectors', 45)
 
     # 8 Estimated Output/ Actual Totals per County
-    pandabarplot(df.groupby('county')['estimated_cost', 'total_amount'].sum().sort_values('total_amount', ascending=False)
-                 .head(15), False, 'Estimates Output vs Actual Totals for Top 15 Counties', 45)
+    pandabarplot(df.groupby('county')['estimated_cost', 'total_amount'].sum().sort_values('estimated_cost', ascending=False)
+                 .head(25), False, 'Estimates Output vs Actual Totals for Top 15 Counties', 45)
 
     # 9 No. of Projects funded per year
     pandabarplot(df.astype(bool).sum(), False, "No. of Projects Funded Per Year", 0, True)
@@ -167,8 +169,36 @@ df_2007 = df[df.f2005_2006 != 0]
 # df_2007.to_csv(miniProjectLoc + "CDF_2006.csv", sep=',', encoding='utf-8')
 years = ['f2003_2004', 'f2005_2006', 'f2004_2005',  'f2006_2007', 'f2007_2008', 'f2008_2009', 'f2009_2010']
 
-# Categorising Money received
-names = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
-df['total_amount_categ'] = pd.cut(df.total_amount, labels=names, bins=np.exp(range(20))[::2]).dropna()
-df['total_amount_categories'] = df.total_amount_categ.astype(int)
-df.drop(columns=['total_amount_categ', 'total_amount'], inplace=True)
+def knnml():
+    print(np.exp(range(0, 12)))
+    # Categorising Money received
+    df['total_amount_categ'] = pd.cut(df.total_amount, labels=range(1, 20), bins=np.exp(range(0, 20, 1))).dropna()
+
+    df.plot.scatter(x='total_amount', y='estimated_cost')
+
+    # Training and Testing Data
+    from sklearn.model_selection import train_test_split
+    # X is taken as the independent variable and Y the dependent (the last row i.e. target)
+    X_train, X_test, y_train, y_test = train_test_split(df[['x','y']], df['total_amount_categ'], random_state=0)
+
+    from sklearn.neighbors import KNeighborsClassifier
+    knn = KNeighborsClassifier(n_neighbors=15)
+
+    knn.fit(X_train, y_train)
+    y_pred = knn.predict(X_test)  # Test set predictions
+
+    print('Test set score: (Using knn.score) {:.2f}'.format(knn.score(X_test, y_test)))
+
+    df_p = df.groupby('total_amount_categ')['total_amount'].count()
+    print(df_p)
+    df_p.plot.bar()
+
+    x = df[ ['f2003_2004', 'f2005_2006']]
+    y = df['total_amount_categ']
+    kmeans = KMeans(n_clusters=10, random_state=0)
+    y_kmeans = kmeans.fit_predict(x)
+
+    print('Accuracy set score: {:.2f}'.format(np.mean(y == y_kmeans)))
+
+allgraphs()
+knnml()
